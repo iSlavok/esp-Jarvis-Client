@@ -7,12 +7,14 @@
 #include "Button.h"
 #include "nvs_flash.h"
 #include <cstring>
+#include "WiFiManager.h"
+#include "WebConfigServer.h"
 
-auto ssid        = "xxxx";
-auto password    = "xxxx";
-auto mqttAddress = "103.97.88.123";
-auto udpAddress  = "192.168.0.70";
-auto udpPort = 10052;
+const auto apSSID = "ESP32_Config";
+const auto apPassword = "config123";
+const auto mqttAddress = "103.97.88.123";
+const auto udpAddress  = "192.168.0.70";
+constexpr auto udpPort = 10052;
 String host = "http://192.168.0.70:5252/audio-stream";
 String state = "waiting";
 const char* states[] = {"waiting", "recording", "responding", "speaking"};
@@ -26,6 +28,8 @@ const char* states[] = {"waiting", "recording", "responding", "speaking"};
 
 void buttonCallback(int buttonState);
 
+WiFiManager* wifiManager = nullptr;
+WebConfigServer* webServer = nullptr;
 WiFiUDP udp;
 MQTTClient mqttClient(mqttAddress);
 Microphone mic(I2S_SCK_MIC, I2S_WS_MIC, I2S_SD_MIC, 41100, 1024);
@@ -129,7 +133,13 @@ void initNVS() {
 }
 
 void connectWiFi() {
-    WiFi.begin(ssid, password);
+    wifiManager = new WiFiManager();
+    wifiManager->begin();
+    WiFi.softAP(apSSID, apPassword);
+    Serial.print("AP IP: ");
+    Serial.println(WiFi.softAPIP());
+    webServer = new WebConfigServer(wifiManager);
+    webServer->begin();
     Serial.print("WiFi: ");
     while (WiFiClass::status() != WL_CONNECTED) {
         led.wifiConnecting();
@@ -174,5 +184,4 @@ void loop() {
 
 void audio_info(const char *info){
     Serial.println(info);
-//    mqttClient.sendLog(info);
 }

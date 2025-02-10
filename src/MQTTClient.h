@@ -21,7 +21,6 @@ private:
     WiFiClient espClient;
     PubSubClient client;
     std::function<void(const String&)> messageCallback;
-    
     static MQTTClient* instance;
 
     void connectMQTT();
