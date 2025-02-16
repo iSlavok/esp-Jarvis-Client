@@ -30,9 +30,8 @@ void buttonCallback(int buttonState);
 
 WiFiManager* wifiManager = nullptr;
 WebConfigServer* webServer = nullptr;
-WiFiUDP udp;
 MQTTClient mqttClient(mqttAddress);
-Microphone mic(I2S_SCK_MIC, I2S_WS_MIC, I2S_SD_MIC, 41100, 1024);
+Microphone mic(I2S_SCK_MIC, I2S_WS_MIC, I2S_SD_MIC, 22500, 128, 512, udpPort, udpAddress);
 Audio audio;
 Led led(5, 4);
 Button button(19, buttonCallback);
@@ -115,9 +114,9 @@ String read_vars(const char* key) {
     ESP_ERROR_CHECK(nvs_open("storage", NVS_READWRITE, &my_handle));
     size_t required_size;
     ESP_ERROR_CHECK(nvs_get_str(my_handle, key, nullptr, &required_size));
-    char* value = (char*)malloc(required_size);
+    const auto value = static_cast<char *>(malloc(required_size));
     ESP_ERROR_CHECK(nvs_get_str(my_handle, key, value, &required_size));
-    String result = String(value);
+    auto result = String(value);
     free(value);
     nvs_close(my_handle);
     return result;
@@ -154,7 +153,6 @@ void setup() {
     led.begin();
     connectWiFi();
     mqttClient.begin(mqttCallback, read_vars("MQTT_USERNAME").c_str(), read_vars("MQTT_PASSWORD").c_str());
-    udp.begin(udpPort);
     mic.begin();
     button.begin();
     audio.setPinout(I2S_BCLK_SPK, I2S_LRC_SPK, I2S_DOUT_SPK);
@@ -168,7 +166,7 @@ void loop() {
     button.loop();
     mqttClient.loop();
     if (state == "waiting" || state == "recording") {
-        mic.readAndSend(udp, udpAddress, udpPort);
+        mic.loop();
     } else if (state == "speaking") {
         audio.loop();
         if (audio.isEOF()) {
