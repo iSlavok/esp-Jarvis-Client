@@ -1,5 +1,4 @@
 #include <WiFi.h>
-#include <WiFiUdp.h>
 #include "MQTTClient.h"
 #include "Microphone.h"
 #include "Audio/Audio.h"
@@ -13,7 +12,7 @@
 const auto apSSID = "ESP32_Config";
 const auto apPassword = "config123";
 const auto mqttAddress = "103.97.88.123";
-const auto udpAddress  = "192.168.0.70";
+const auto udpAddress  = "103.97.88.123";
 constexpr auto udpPort = 10052;
 String host = "http://192.168.0.70:5252/audio-stream";
 String state = "waiting";
@@ -36,7 +35,7 @@ Audio audio;
 Led led(5, 4);
 Button button(19, buttonCallback);
 
-vector<String> splitWString(const String& str, char delimiter) {
+vector<String> splitWString(const String& str, const char delimiter) {
     vector<String> words;
     int start = 0, end;
     while ((end = str.indexOf(delimiter, start)) != -1) {
